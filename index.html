@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>MathSweeper 💣</title>
+  <title>EcuaMinas 💣</title>
   <style>
     *,
     *::before,
@@ -117,56 +117,6 @@
       background: var(--surface);
       color: var(--text);
       border: 1px solid var(--border);
-    }
-
-    .diff-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 18px 20px;
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      text-align: left;
-    }
-
-    .diff-card:active {
-      transform: scale(0.97);
-    }
-
-    .diff-card.facil:active,
-    .diff-card.facil:focus {
-      border-color: var(--green);
-    }
-
-    .diff-card.mediano:active,
-    .diff-card.mediano:focus {
-      border-color: var(--amber);
-    }
-
-    .diff-card.dificil:active,
-    .diff-card.dificil:focus {
-      border-color: var(--red);
-    }
-
-    .diff-card-info {
-      flex: 1;
-    }
-
-    .diff-card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .diff-card-sub {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-top: 2px;
     }
 
     /* INPUT */
@@ -569,7 +519,7 @@
       <div class="spacer"></div>
       <div class="logo-wrap">
         <span class="logo-emoji">💣</span>
-        <h1 class="gradient-text">MathSweeper</h1>
+        <h1 class="gradient-text">EcuaMinas</h1>
         <p style="color:var(--muted);margin-top:8px;font-size:0.95rem;">Buscaminas Matemático</p>
       </div>
       <div class="menu-btns">
@@ -595,40 +545,6 @@
       <div style="height:14px;"></div>
       <button class="btn btn-primary" onclick="confirmName()">Continuar →</button>
       <div class="spacer"></div>
-    </div>
-
-    <!-- DIFFICULTY -->
-    <div id="screen-difficulty" class="screen">
-      <button class="back-btn" onclick="showScreen('name')">← Volver</button>
-      <div style="padding:16px 0 22px;">
-        <h2>Elige tu dificultad</h2>
-        <p style="color:var(--muted);margin-top:4px;">Hola, <span id="greet-name"
-            style="color:var(--cyan);font-weight:600;"></span></p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:11px;flex:1;">
-        <button class="diff-card facil" onclick="startGame('facil')">
-          <span style="font-size:2rem;">🟢</span>
-          <div class="diff-card-info">
-            <div class="diff-card-title">Fácil</div>
-            <div class="diff-card-sub">8×8 · 10 minas · 3 vidas · +3 pts por mina resuelta</div>
-          </div>
-        </button>
-        <button class="diff-card mediano" onclick="startGame('mediano')">
-          <span style="font-size:2rem;">🟡</span>
-          <div class="diff-card-info">
-            <div class="diff-card-title">Mediano</div>
-            <div class="diff-card-sub">10×10 · 20 minas · 2 vidas · +5 pts por mina resuelta</div>
-          </div>
-        </button>
-        <button class="diff-card dificil" onclick="startGame('dificil')">
-          <span style="font-size:2rem;">🔴</span>
-          <div class="diff-card-info">
-            <div class="diff-card-title">Difícil</div>
-            <div class="diff-card-sub">12×12 · 30 minas · 1 vida · +10 pts por mina resuelta</div>
-          </div>
-        </button>
-      </div>
-      <div style="height:20px;"></div>
     </div>
 
     <!-- GAME -->
@@ -815,8 +731,8 @@
       const v = document.getElementById('inp-name').value.trim();
       if (!v) { toast('Por favor ingresa tu nombre 😊'); return; }
       G.playerName = v;
-      document.getElementById('greet-name').textContent = v;
-      showScreen('difficulty');
+      const diffs = ['facil', 'mediano', 'dificil'];
+      startGame(diffs[Math.floor(Math.random() * diffs.length)]);
     }
 
     // ── GAME INIT ──────────────────────────────────────────────────────
@@ -826,6 +742,7 @@
       G.playerName = name;
       showScreen('game');
       requestAnimationFrame(() => { renderBoard(); updateHUD(); });
+      toast('🎲 Dificultad: ' + G.cfg.label);
     }
 
     function placeMines(avR, avC) {
@@ -913,8 +830,9 @@
       el.addEventListener('pointermove', e => {
         if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) > 8) clearTimeout(timer);
       });
-      el.addEventListener('pointerup', () => {
+      el.addEventListener('pointerup', e => {
         clearTimeout(timer);
+        e.preventDefault();
         if (!activated) tap(+el.dataset.r, +el.dataset.c);
       });
       el.addEventListener('pointercancel', () => clearTimeout(timer));
@@ -998,9 +916,12 @@
         cont.appendChild(btn);
       });
       document.getElementById('modal-q').classList.add('active');
+      G.qLocked = true;
+      setTimeout(() => { G.qLocked = false; }, 400);
     }
 
     function answerQ(sel, btn, q) {
+      if (G.qLocked) return;
       document.querySelectorAll('.opt-btn').forEach(b => b.onclick = null);
       const correct = sel === q.a;
       const res = document.getElementById('q-result');
