@@ -508,6 +508,70 @@
       flex-direction: column;
       gap: 12px;
     }
+
+    /* TUTORIAL */
+    #tutorial-content {
+      text-align: center;
+    }
+
+    .tut-step {
+      display: none;
+    }
+
+    .tut-step.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .tut-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .tut-text {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.6;
+      max-width: 380px;
+    }
+
+    .tut-svg {
+      width: 100%;
+      max-width: 300px;
+      height: 250px;
+    }
+
+    @keyframes revealCell {
+      0% { fill: #2a3a4a; }
+      50% { fill: #2a3a4a; }
+      100% { fill: #0f1923; }
+    }
+
+    @keyframes mineBoom {
+      0% { fill: #2a3a4a; }
+      50% { fill: rgba(239, 68, 68, 0.6); }
+      100% { fill: rgba(239, 68, 68, 0.35); }
+    }
+
+    @keyframes flagPlaced {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .cell-demo {
+      animation: revealCell 2s infinite;
+    }
+
+    .mine-demo {
+      animation: mineBoom 2s infinite;
+    }
+
+    .flag-demo {
+      animation: flagPlaced 0.5s ease-out, flagPlaced 0.5s ease-in 1.5s reverse infinite;
+    }
   </style>
 </head>
 
@@ -524,6 +588,7 @@
       </div>
       <div class="menu-btns">
         <button class="btn btn-primary" onclick="goName()">🎮 Jugar</button>
+        <button class="btn btn-ghost" onclick="showTutorial()">📖 Tutorial</button>
       </div>
       <div class="spacer"></div>
       <p style="color:var(--muted);font-size:0.75rem;text-align:center;padding-bottom:12px;">
@@ -545,6 +610,16 @@
       <div style="height:14px;"></div>
       <button class="btn btn-primary" onclick="confirmName()">Continuar →</button>
       <div class="spacer"></div>
+    </div>
+
+    <!-- TUTORIAL -->
+    <div id="screen-tutorial" class="screen">
+      <button class="back-btn" onclick="showScreen('menu')">← Volver</button>
+      <div id="tutorial-content" style="flex:1;display:flex;flex-direction:column;justify-content:center;"></div>
+      <div style="display:flex;gap:9px;margin-top:16px;">
+        <button id="tut-prev" class="btn btn-ghost" style="flex:1;" onclick="tutorialPrev()">← Anterior</button>
+        <button id="tut-next" class="btn btn-primary" style="flex:1;" onclick="tutorialNext()">Siguiente →</button>
+      </div>
     </div>
 
     <!-- GAME -->
@@ -987,6 +1062,80 @@
     function restartGame() {
       document.getElementById('modal-go').classList.remove('active');
       startGame(G.diff);
+    }
+
+    // ── TUTORIAL ───────────────────────────────────────────────────────
+    let tutorialStep = 0;
+    const tutorials = [
+      {
+        title: '¡Bienvenido a EcuaMinas!',
+        text: 'Un juego donde debes resolver ecuaciones matemáticas para evitar las minas y sobrevivir. Aprenderemos cómo jugar paso a paso.',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><circle cx="150" cy="125" r="80" fill="var(--purple)" opacity="0.3"/><text x="150" y="140" text-anchor="middle" font-size="48" fill="var(--purple)">💣</text></svg>'
+      },
+      {
+        title: 'Objetivo del Juego',
+        text: 'Tu misión:\n• Hace click en celdas del tablero\n• Si pisan una mina, debes resolver una ecuación\n• Responde correctamente para sobrevivir\n• Resuelve todas las celdas sin minas para ganar',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><rect x="50" y="30" width="200" height="200" fill="none" stroke="var(--cyan)" stroke-width="2" rx="8"/><circle cx="100" cy="80" r="18" fill="var(--green)" opacity="0.7"/><circle cx="150" cy="80" r="18" fill="rgba(239, 68, 68, 0.3)"/><circle cx="200" cy="80" r="18" fill="var(--green)" opacity="0.7"/><text x="100" y="85" text-anchor="middle" font-size="12" fill="white" font-weight="bold">3</text><text x="150" y="85" text-anchor="middle" font-size="16" fill="var(--red)">💣</text></svg>'
+      },
+      {
+        title: 'Cómo Clickear una Celda',
+        text: 'Haz un toque rápido sobre una celda para revelarla. Si es segura, se mostrará un número indicando cuántas minas hay cerca.',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><rect x="80" y="70" width="50" height="50" fill="#2a3a4a" stroke="var(--cyan)" stroke-width="2" rx="4" class="cell-demo"/><text x="105" y="130" text-anchor="middle" font-size="12" fill="var(--muted)">Click aquí ↓</text><text x="105" y="200" text-anchor="middle" font-size="28" fill="var(--green)">↓ Se revela</text></svg>'
+      },
+      {
+        title: 'Cómo Colocar una Bandera',
+        text: 'Mantén presionado durante 0.5 segundos para colocar una 🚩 bandera marcando una celda que crees que tiene una mina.',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><rect x="80" y="70" width="50" height="50" fill="#2a3a4a" stroke="var(--cyan)" stroke-width="2" rx="4"/><text x="105" y="100" text-anchor="middle" font-size="20" fill="var(--amber)" class="flag-demo">🚩</text><text x="105" y="160" text-anchor="middle" font-size="12" fill="var(--text)">Mantén presionado</text><text x="105" y="180" text-anchor="middle" font-size="12" fill="var(--muted)">(0.5 segundos)</text></svg>'
+      },
+      {
+        title: 'Pisaste una Mina',
+        text: 'Cuando tocas una mina, aparece un modal con una ecuación matemática. ¡Resuélvela para sobrevivir y continuar jugando!',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><rect x="70" y="40" width="160" height="160" fill="var(--surface)" stroke="var(--border)" stroke-width="1" rx="10"/><rect x="85" y="60" width="130" height="25" fill="var(--red)" opacity="0.2"/><text x="150" y="76" text-anchor="middle" font-size="12" fill="var(--red)" font-weight="bold">¡Pisaste una mina!</text><rect x="85" y="95" width="130" height="40" fill="var(--surface2)" rx="4"/><text x="150" y="120" text-anchor="middle" font-size="11" fill="var(--text)">Resuelve:</text><text x="150" y="135" text-anchor="middle" font-size="10" fill="var(--cyan)">x + 5 = 9</text></svg>'
+      },
+      {
+        title: 'Responde la Pregunta',
+        text: 'Se te mostrará una ecuación con 3 opciones de respuesta (A, B, C). Selecciona la correcta para:  ✅ Ganar puntos y desactivar la mina\n❌ Si fallas, perderás una vida',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><rect x="50" y="30" width="200" height="40" fill="var(--surface2)" rx="6"/><text x="150" y="55" text-anchor="middle" font-size="11" fill="var(--cyan)">x + 5 = 9</text><g><rect x="60" y="85" width="180" height="22" fill="var(--surface2)" stroke="var(--green)" stroke-width="2" rx="4"/><text x="70" y="102" font-size="11" fill="var(--text)">A) x = 2</text></g><g><rect x="60" y="115" width="180" height="22" fill="var(--surface2)" stroke="var(--border)" stroke-width="1" rx="4"/><text x="70" y="132" font-size="11" fill="var(--text)">B) x = 4</text></g><g><rect x="60" y="145" width="180" height="22" fill="var(--surface2)" stroke="var(--border)" stroke-width="1" rx="4"/><text x="70" y="162" font-size="11" fill="var(--text)">C) x = 6</text></g></svg>'
+      },
+      {
+        title: 'Vidas y Puntos',
+        text: 'Tienes vidas (❤️) que pierdes al fallar una pregunta. Ganas puntos (⭐) por cada mina resuelta correctamente. El juego termina cuando pierdes todas tus vidas.',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><g><text x="30" y="60" font-size="28">♥</text><text x="30" y="100" font-size="28">♥</text><text x="30" y="140" font-size="28">♥</text><text x="100" y="85" font-size="12" fill="var(--text)">Vidas</text></g><g><text x="200" y="70" font-size="32">⭐</text><text x="210" y="85" font-size="12" fill="var(--cyan)">Puntos</text><text x="210" y="105" font-size="10" fill="var(--muted)">+3 a +10</text></g><text x="150" y="190" font-size="11" fill="var(--muted)">La dificultad afecta minas, vidas y puntos</text></svg>'
+      },
+      {
+        title: '¡Listo para Jugar!',
+        text: '¡Ahora ya sabes cómo jugar! Recuerda:\n• Piensa antes de hacer click\n• Usa las banderas estratégicamente\n• Resuelve las ecuaciones correctamente\n¡Buena suerte y diviértete! 🚀',
+        svg: '<svg class="tut-svg" viewBox="0 0 300 250"><circle cx="150" cy="100" r="50" fill="var(--green)" opacity="0.2"/><text x="150" y="120" text-anchor="middle" font-size="60" fill="var(--green)">🎮</text></svg>'
+      }
+    ];
+
+    function showTutorial() {
+      tutorialStep = 0;
+      renderTutorialStep();
+      showScreen('tutorial');
+    }
+
+    function renderTutorialStep() {
+      const step = tutorials[tutorialStep];
+      const content = document.getElementById('tutorial-content');
+      content.innerHTML = `
+        <div class="tut-step active">
+          <div class="tut-title">${step.title}</div>
+          <div>${step.svg}</div>
+          <div class="tut-text" style="white-space:pre-line;">${step.text}</div>
+        </div>
+      `;
+      document.getElementById('tut-prev').disabled = tutorialStep === 0;
+      document.getElementById('tut-next').textContent = tutorialStep === tutorials.length - 1 ? '✓ Finalizar' : 'Siguiente →';
+    }
+
+    function tutorialNext() {
+      if (tutorialStep < tutorials.length - 1) { tutorialStep++; renderTutorialStep(); }
+      else { showScreen('menu'); }
+    }
+
+    function tutorialPrev() {
+      if (tutorialStep > 0) { tutorialStep--; renderTutorialStep(); }
     }
 
     // ── HUD ────────────────────────────────────────────────────────────
